@@ -3,8 +3,8 @@ package File
 import "os"
 
 func Exists(path string) bool {
-	_, error := os.Stat(path)
-	return !os.IsNotExist(error)
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 func CurrentDirectory() string {
