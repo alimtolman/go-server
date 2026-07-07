@@ -152,7 +152,9 @@ func (table *JsonTable[T]) save() {
 }
 
 func (table *JsonTable[T]) updateLastId() {
-	if len(table.data) != 0 {
-		table.lastId = table.data[len(table.data)-1].GetId()
+	for _, item := range table.data {
+		if item.GetId() > table.lastId {
+			table.lastId = item.GetId()
+		}
 	}
 }
