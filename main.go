@@ -4,6 +4,7 @@ import (
 	"Server/DataBase"
 	"Server/DataBase/Tables"
 	"Server/Helpers/Convert"
+	"Server/Helpers/File"
 	"fmt"
 	"io"
 	"log"
@@ -78,23 +79,28 @@ func main() {
 	http.HandleFunc("/api/data/ids", AppDataIds)
 
 	waitGroup.Add(1)
-	waitGroup.Add(1)
 
 	go func() {
+		defer waitGroup.Done()
+
 		if err := http.ListenAndServe(":"+http_port, nil); err != nil {
-			log.Fatal("Server listen error:", err)
+			log.Println("Server listen error:", err)
 		}
-
-		waitGroup.Done()
 	}()
 
-	go func() {
-		if err := http.ListenAndServeTLS(":"+https_port, cert_path, key_path, nil); err != nil {
-			log.Fatal("Server tls listen error:", err)
-		}
+	if File.Exists(cert_path) && File.Exists(key_path) {
+		waitGroup.Add(1)
 
-		waitGroup.Done()
-	}()
+		go func() {
+			defer waitGroup.Done()
+
+			if err := http.ListenAndServeTLS(":"+https_port, cert_path, key_path, nil); err != nil {
+				log.Println("Server tls listen error:", err)
+			}
+		}()
+	} else {
+		log.Println("TLS cert/key not found, skipping HTTPS listener:", cert_path, key_path)
+	}
 
 	waitGroup.Wait()
 }
